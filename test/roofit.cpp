@@ -1,0 +1,82 @@
+#include <iostream>
+
+#include "TFile.h"
+#include "TH1.h"
+#include "TCanvas.h"
+#include "TLegend.h"
+#include "TString.h"
+#include "RooWorkspace.h"
+
+#include "../lib/custom_definitions.h"
+#include "../lib/admin_utils.h"
+
+// !bashing/run_file.sh test/roofitt
+using namespace RooFit;
+
+int main() {
+   
+	const char* branch = "trk_pt";
+	//RVecF mass_cuts = {50, 30, 25, 20, 15, 10, 5};
+	Float_t val = 20; 
+
+	TFile *f = TFile::Open(TString::Format("media/root_files/phi_phi_reconstruction/phase_space/mass_cuts/%s/compare_topologies/mass_bound = %.3g MeV.root", branch, val));
+    TCanvas* can = (TCanvas*) f->Get("c_mass_bound_20");  // change name to your histogram
+    TH1D *h = (TH1D*) f->Get(TString::Format("diagonal %.3gMeV", val));  // change name to your histogram
+	
+	// --- Define observable ---
+    Double_t xmin = h->GetXaxis()->GetXmin();
+    Double_t xmax = h->GetXaxis()->GetXmax();
+    RooRealVar m("m", "mass", xmin, xmax);
+
+    // change to Roo data type
+	RooDataHist data("data", "dataset with mass", RooArgList(m), Import(*h));
+
+    // main gaussian signal
+	RooRealVar mean("mean", "mean of gauss", 120, 110, 130);
+    RooRealVar sigma("sigma", "width of gauss", 5, 0.0001, 10);
+    RooGaussian gauss("gauss", "signal gaussian", m, mean, sigma);
+
+    // Angel background
+	RooRealVar m0("m0", "endpoint", xmax); // fixed endpoint at edge of histogram
+    RooRealVar c("c", "curvature", -20., -1000., -0.1);
+    RooArgusBG argus("argus", "Argus background", m, m0, c);
+
+   	// PDF so need to define signal assume 50/50 between signal and data
+	RooRealVar nsig("nsig", "signal yield", h->Integral()*0.5, 0, h->Integral());
+    RooRealVar nbkg("nbkg", "background yield", h->Integral()*0.5, 0, h->Integral());
+
+	//total
+    RooAddPdf model("model", "sig+bg", RooArgList(gauss, argus), RooArgList(nsig, nbkg));
+    model.fitTo(data);
+
+	//plot everything
+    RooPlot* frame = m.frame(Title("Fit Gaussian + ARGUS to histogram"));
+    data.plotOn(frame);
+    model.plotOn(frame);
+    model.plotOn(frame, Components(gauss), LineColor(kRed), LineStyle(kDashed));
+    model.plotOn(frame, Components(argus), LineColor(kGreen), LineStyle(kDashed));
+
+	TLegend* leg = new TLegend(0.6,0.7,0.88,0.88);
+//	leg->AddEntry(frame->findObject("data"), "Data", "p");
+//	leg->AddEntry(frame->findObject("gauss"), "Signal (Gaussian)", "l");
+//	leg->AddEntry(frame->findObject("argus"), "Background (ARGUS)", "l");
+   
+	TCanvas* c1 = new TCanvas("c1", "Fit Canvas", 800, 600);
+
+	//ROOT::VecOps::RVec<TObject*> rooObjects = { &m, &mean, &sigma, &nsig, &nbkg,
+                                            &gauss, &argus, &model, &data };
+
+	 RooWorkspace w("w", "workspace");
+	 w.import(gauss);
+	 w.import(argus);
+	 w.import(model);
+	 w.import(data);
+
+	TFlile out(TString::Format("media/root_files/phi_phi_reconstruction/phase_space/mass_cuts/%s/compare_topologies/fit_bound = %.3g MeV.root", branch, val));
+	w.Write();
+	out.Close();
+
+
+	return 0;
+
+}

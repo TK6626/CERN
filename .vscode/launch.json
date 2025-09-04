@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run ROOT Script",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/usr/local/bin/root",
+            "args": [
+                "-x",
+                "-Wall",
+                "-Weffc++",
+                "-Wextra",
+                "-Wconversion",
+                "-Wsign-conversion",
+                "-Werror",
+                "${file}"
+            ],
+            
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "externalConsole": true,
+            "MIMode": "lldb"
+        }
+    ]
+}

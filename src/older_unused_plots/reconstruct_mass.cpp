@@ -1,0 +1,209 @@
+#include <array>
+#include <stdio.h>
+#include <cmath>
+
+#include "TMath.h"
+#include "ROOT/RDataFrame.hxx"
+#include "ROOT/RVec.hxx"
+#include "TLorentzVector.h"
+#include "TCanvas.h"
+#include "TH2.h"
+#include "TF1.h"
+#include "TFitResult.h"
+
+// include headers containing useful functions and definitions
+#include "../lib/computations.h"
+#include "../lib/common_cuts.h"
+
+/*
+ * 	Construct the mass of the 2-pair mesons from the 4-meson tracks 
+ * 
+ *	cut1:
+ *	cut2:
+ *	cut3:
+ *
+ *
+ * */
+
+int main(){
+	
+	// constants
+	const Float_t pion_mass = 0.139; // GeV/c^2
+
+	const Float_t x_min = 260;
+	const Float_t x_max = 1000;
+	const Int_t x_bins = 100;
+	const Float_t y_min = x_min;
+	const Float_t y_max = x_max;
+	const Int_t y_bins = x_bins;
+
+	TH2* graph = new  TH2F("graph", "Reconstructed  #rho mesons;#rho_{1} (MeV / c^{2}) ;#rho_{1} (MeV / c^{2})",
+								x_bins, x_min, x_max, y_bins,y_min, y_max);
+	TCanvas* canvas = new TCanvas("canvas");
+
+
+	// load in tree,get column names, enable multithreading
+    const char* file_name = "/eos/cms/store/group/phys_diffraction/CMSTotemLowPU2018/YounesNtuples/TOTEM20.root";
+    // const char* file_name = "/afs/cern.ch/user/j/jloder/public/simple_cutted_data/TOTEM20simplecut.root";
+	const char* tree_name = "tree";
+	ROOT::EnableImplicitMT();
+	ROOT::RDataFrame df(tree_name, file_name);
+	std::cout << df.Describe() << std::endl;
+
+	//cut based on track number (4)
+	Int_t track_num = 4;
+	auto df_cut1 = cut_branch_single(df, track_num, "ntrk", "==", true);
+
+	// Cut data based on low momentum threshold
+	Float_t low_pt_threshold = 100000;
+	auto df_cut2 = cut_branch_single(df_cut1, low_pt_threshold, "alltrk_pt", "<", true);
+
+	// enforce charge neutrality
+	Int_t trk_charge = 0;
+	auto df_cut3 = cut_branch_sum(df_cut2, trk_charge, "trk_q", "==", true);
+
+	
+	auto df_cut4 = df_cut3.Define("trk_rap", [pion_mass](const ROOT::RVec<float>& pt, 
+                             const ROOT::RVec<float>& eta) {
+    ROOT::RVec<float> rap(pt.size());
+    for (size_t i = 0; i < pt.size(); ++i) {
+        float mt = sqrt(pion_mass * pion_mass + pt[i] * pt[i]);
+        float num = sqrt(pion_mass * pion_mass + pt[i] * pt[i] * pow(cosh(eta[i]), 2)) + pt[i] * sinh(eta[i]);
+        rap[i] = log(num / mt);
+    }
+    return rap;
+	}, {"trk_pt", "trk_eta"});
+
+
+	//find 4-momentum of pions and keep track of which ones are are +ve and -ve
+	Int_t len3 = *df_cut3.Count();
+	std::array<Int_t, 2> pion_neg;
+	std::array<Int_t, 2> pion_pos;
+
+	
+	df_cut4.Foreach
+	(
+		[track_num, pion_mass, &pion_neg, &pion_pos, &graph]
+		(const RVecI &trk_q, const RVecF &trk_pt, const RVecF &trk_eta, const RVecF &trk_phi)
+		
+		{
+		Int_t pos_count = 0;
+        Int_t neg_count = 0;
+		std::array<TLorentzVector,4> pion_4p;
+		for (Int_t i = 0; i < track_num; ++i)
+			{
+			switch(trk_q[i]){
+			
+			case +1:
+				if (pos_count < 2){
+					pion_pos[pos_count] = i;
+					++pos_count;
+					}
+				break;
+
+			case -1:
+				if (neg_count < 2){
+					pion_neg[neg_count] = i;
+					++neg_count;
+					}
+				break;
+
+			default:
+				std::cout << " this is wrong" << std::endl;
+			}
+		if (pos_count == 2 && neg_count == 2)
+		{for (Int_t i = 0; i < track_num; ++i){
+
+		//	Float_t px = trk_pt[i] * TMath::Cos(trk_phi[i]);
+		//	Float_t	py = trk_pt[i] * TMath::Sin(trk_phi[i]);
+	    //	Float_t pz = trk_pt[i] * std::sinh(trk_eta[i]);
+		// 	Float_t E = TMath::Sqrt(pion_mass*pion_mass + trk_pt[i]*trk_pt[i] + pz*pz);
+		//	TLorentzVector p_pion(px, py, pz, E); 
+			
+			TLorentzVector p_pion;
+            p_pion.SetPtEtaPhiM(trk_pt[i], trk_eta[i], trk_phi[i], pion_mass);
+            pion_4p[i] = p_pion;
+
+		
+		}
+		
+		// The two possible combinations of pions that are charge neutral	
+		TLorentzVector P_00 = pion_4p[pion_pos[0]] + pion_4p[pion_neg[0]];
+		TLorentzVector P_11 = pion_4p[pion_pos[1]] + pion_4p[pion_neg[1]];
+		
+		TLorentzVector P_01 = pion_4p[pion_pos[0]] + pion_4p[pion_neg[1]];
+		TLorentzVector P_10 = pion_4p[pion_pos[1]] + pion_4p[pion_neg[0]];	
+		
+		// Convert MeV for easier reading and comparison
+	
+		graph->Fill(P_00.M()*1e3, P_11.M()*1e3);	
+		graph->Fill(P_01.M()*1e3, P_10.M()*1e3);	
+	}
+	}
+			
+		},
+		{"trk_q", "trk_pt", "trk_eta", "trk_phi"}
+	);
+
+
+	//Draw normal graphs
+	//canvas->SetLogz();	 
+	graph->Draw("COLZ");
+	canvas->Update();
+	canvas->SaveAs("media/photos/Younes_NTuples_TOTEM20/glueball_mass_reconstruction/reconstucted_mass_pair_mesons.pdf");
+	canvas->Clear();
+
+	TFile* outFile = new TFile("media/root_files/Younes_NTuples_TOTEM20/glueball_mass_reconstruction/reconstucted_mass_pair_mesons.root", "RECREATE");
+	graph->Draw("COLZ");
+	// fit->Draw("SAME");
+    canvas->Update();
+	canvas->Write();
+	outFile->Close();
+	canvas->Clear();
+
+
+	//Y Projection
+	Double_t x_1 = x_min, x_2 = x_max;
+	Int_t x_bin_1 = graph->GetXaxis()->FindFixBin(x_1);
+	Int_t x_bin_2 = graph->GetXaxis()->FindFixBin(x_2);
+	TH1D *y_projection = graph->ProjectionY("Y_projection", x_bin_1, x_bin_2);
+	y_projection->GetXaxis()->SetTitle("#rho_{1} (MeV / c^{2})");
+	y_projection->GetYaxis()->SetTitle(Form("Events (.%1f)",(Float_t)((x_bin_2 - x_bin_1)/x_bins)));
+	
+	y_projection->Draw("COLZ");
+	canvas->Update();
+	canvas->SaveAs("media/photos/Younes_NTuples_TOTEM20/glueball_mass_reconstruction/reconstucted_mass_pair_mesons_y_projection.pdf");
+	canvas->Clear();
+	
+	TFile* outFile_y = new TFile("media/root_files/Younes_NTuples_TOTEM20/glueball_mass_reconstruction/reconstucted_mass_pair_mesons_y_projection.root", "RECREATE");
+	y_projection->Draw("COLZ");
+	// fit->Draw("SAME");
+    canvas->Update();
+	canvas->Write();
+	outFile_y->Close();
+	canvas->Clear();
+	
+
+	//X projections
+	Double_t y_1 = y_min, y_2 = y_max;
+	Int_t y_bin_1 = graph->GetYaxis()->FindFixBin(y_1);
+	Int_t y_bin_2 = graph->GetYaxis()->FindFixBin(y_2);
+	TH1D *x_projection = graph->ProjectionX("X_projection", y_bin_1, y_bin_2);
+	x_projection->GetXaxis()->SetTitle("#rho_{1} (MeV / c^{2})");
+	x_projection->GetYaxis()->SetTitle(Form("Events (.%1f)",(Float_t)((y_bin_2 - y_bin_1)/y_bins)));
+	
+	x_projection->Draw("COLZ");
+	canvas->Update();
+	canvas->SaveAs("media/photos/Younes_NTuples_TOTEM20/glueball_mass_reconstruction/reconstucted_mass_pair_mesons_x_projection.pdf");
+	canvas->Clear();
+	
+	TFile* outFile_x = new TFile("media/root_files/Younes_NTuples_TOTEM20/glueball_mass_reconstruction/reconstucted_mass_pair_mesons_x_projection.root", "RECREATE");
+	x_projection->Draw("COLZ");
+	// fit->Draw("SAME");
+    canvas->Update();
+	canvas->Write();
+	outFile_x->Close();
+    canvas->Clear();
+
+	return 0;
+}
