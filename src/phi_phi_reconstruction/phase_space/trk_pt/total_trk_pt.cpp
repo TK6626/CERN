@@ -46,15 +46,14 @@ int main() {
 	const Float_t phi_mass = m_phi / 1e3; // GeV
 	const char* branch = "trk_pt";
 
-	const RVecStr topologies = {"40"};
+	const RVecStr topologies = {"20"};
 
 	// Mass cuts in GeV
 	RVecF mass_cuts = {10, 15, 20, 25, 30};
 	mass_cuts *= 1e-3;
 	
-	
 
-	FitPlotCfg plot{150, 0, 3200, FitModelType::GaussAndArgus};
+	FitPlotCfg plot{150, 0, 3.2, FitModelType::GaussAndMassThreshold};
 	for (TString topo : topologies) {
 		RDF df("tree", TString::Format("data/phi_phi_reconstruction/uncut_SNR_" + topo + ".root"));
 
@@ -84,27 +83,35 @@ void FitAndSave(
 	double x_min = hist->GetXaxis()->GetXmin();
 	double x_max = hist->GetXaxis()->GetXmax();
 	RooRealVar x_var("x_var", "mass", x_min, x_max);
+	Float_t sf = 1e-3;	
 	
 
 	RooDataHist data("data", "Dataset from histogram", RooArgList(x_var), hist);
 	// Define the Gaussian signal
-	RooRealVar mean("mean", "mean of gauss", 1000, 300, 1300);
-	RooRealVar sigma("sigma", "width of gauss", 200, 20, 500);
+	RooRealVar mean("mean", "mean of gauss", 500 * sf, 400 * sf, 600 * sf);
+	RooRealVar sigma("sigma", "width of gauss", 200 * sf, 20 * sf, 500 * sf);
 	RooGaussian gauss("gauss", "signal gaussian", x_var, mean, sigma);
 	
-	RooRealVar mu1("mu1", "mean of first Gaussian", 500, 300, 700);
-	RooRealVar sigma1("sigma1", "sigma of first Gaussian", 200, 20, 500);
-	RooRealVar mu2("mu2", "mean of second Gaussian",900, 700, 1200);
-	RooRealVar sigma2("sigma2", "sigma of second Gaussian", 200, 20, 500);
+	RooRealVar mu1("mu1", "mean of first Gaussian", 500 * sf, 300 * sf, 700 * sf);
+	RooRealVar sigma1("sigma1", "sigma of first Gaussian", 200 * sf, 20 * sf, 500 * sf);
+	RooRealVar mu2("mu2", "mean of second Gaussian",900 * sf, 700 * sf, 1200 * sf);
+	RooRealVar sigma2("sigma2", "sigma of second Gaussian", 200 * sf, 20 * sf, 500 * sf);
 	RooRealVar frac("frac", "fraction of first Gaussian", 0.5, 0., 1.);
 	RooAbsPdf* bigauss = BiGaussianPdf("bigauss", "BiGaussian PDF", x_var, mu1, sigma1, mu2, sigma2, frac);
 		
+	RooRealVar x_0("x_0", "threshold", x_min, x_min*0.5, x_min*1.2);
+	RooRealVar p0("p0", "power", 17, 8, 25);
+	RooRealVar a0("a0", "a0", 0, -20, 20);
+	RooRealVar b0("b0", "b0", 40, -20, 60);
+	RooRealVar c0("c0", "c0", -80, -80, 1);
+	RooAbsPdf* thresh = ThresholdBackgroundPdf("threshbkg", "threshbkg", x_var, x_0, p0, a0, b0, c0);
+
 
 	// Define the Argus background
 	RooRealVar x_var0("x_var0", "endpoint", x_max, x_min, x_max*2);
 	RooRealVar p("p", "power", 1, 1e-5, 6);
 	RooRealVar c("c", "curvature", 5, 0.1, 20);
-	RooRealVar shift("shift", "pt offset", 200, 0, 600);
+	RooRealVar shift("shift", "pt offset", 200 * sf, 0, 600);
 	RooAbsPdf* argus = ShiftedArgusPdf("argus", "shifted ARGUS", x_var, x_var0, c, p, shift);
 	
 	// Combine signal and background
@@ -129,10 +136,15 @@ void FitAndSave(
 			Signal = &gauss;
 			model = new RooAddPdf("model", "sig+bg", RooArgList(*Signal, *Background), RooArgList(nsig,nbkg));
 			break;
+		case FitModelType::GaussAndMassThreshold:
+			Signal = &gauss;
+			Background = thresh;
+        	model = new RooAddPdf("model", "sig+bg", RooArgList(*Signal, *Background), RooArgList(nsig, nbkg));
+			break;
 		case FitModelType::BiGaussAndArgus:
 			Signal = bigauss;
 			Background = argus;
-        model = new RooAddPdf("model", "sig+bg", RooArgList(*Signal, *Background), RooArgList(nsig, nbkg));
+        	model = new RooAddPdf("model", "sig+bg", RooArgList(*Signal, *Background), RooArgList(nsig, nbkg));
 			break;
 	}
 	// Fit the model
@@ -184,7 +196,7 @@ TH1F* FilterData(
 					(TMath::Abs(p[1].M() - phi_mass) < val));
 		}, {"phi_four_momentum"})
 	.Foreach([&](const RVecF& p4) {
-		hist->Fill(Sum(p4) * 1e3);
+		hist->Fill(Sum(p4));
 	}, {branch});
 
 	return hist; // hand ownership to caller

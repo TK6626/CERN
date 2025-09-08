@@ -8,7 +8,8 @@ enum class FitModelType {
     Gauss,            // Gaussian
     BiGaussAndArgus,  // BiGaussian and Argus Background
     GaussAndArgus,     // ARGUS and Gaussian
-	GaussAndConst
+	GaussAndConst,
+	GaussAndMassThreshold
 };
 
 // Struct for fit plot configuration

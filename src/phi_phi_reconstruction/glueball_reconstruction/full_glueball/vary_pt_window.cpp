@@ -47,8 +47,8 @@ int main() {
 	Float_t kaon_mass = m_kaon_char / 1e3;
 	Float_t phi_mass = m_phi /1e3;
 	Float_t mass_bound= 20;
-	Int_t nbins = 70;
-	RVecF pt_centre = {0. 83, 0.85, 0.87, 0.89, 0.91, 0.93};
+	Int_t nbins = 80;
+	RVecF pt_centre = {0.7, 0.75, 0.8, 0.85, 0.95};
 
 	Float_t sf = 1e-3; // introduce a scale factor to make fitting easier convert from MeV to whateve
 	for (const Float_t pt : pt_centre) {
@@ -56,14 +56,12 @@ int main() {
 	RVecStr topology = {"20", "40"};
 	ROOT::EnableImplicitMT();
 	for (TString topo : topology) {
-		
-		TString file = TString::Format("data/phi_phi_reconstruction/uncut_SNR_"	+ topo + ".root");
-		RDF df_df("tree", file);
+		TString file = TString::Format("data/phi_phi_reconstruction/uncut_SNR_"	+ topo + ".root"); RDF df_df("tree", file);
 	
 		TH1F* hist = new TH1F("hist", "hist", nbins, 2000*sf, 3000*sf); // make fitting easier by converting to TeV 
 
-		Float_t low_pt = pt - 0.02; // GeV
-		Float_t high_pt = pt + 0.01; // GeV
+		Float_t low_pt = pt - 0.25; // GeV
+		Float_t high_pt = pt + 0.25; // GeV
 		Float_t low_eta = 3; // GeV
 		Float_t high_eta = 9.0; // GeV
 
@@ -96,8 +94,8 @@ int main() {
 	
 		RooDataHist data("data", "Dataset from histogram", RooArgList(x_var), hist);
 		
-		RooRealVar mean("mean", "mean of gauss", 2220 * sf, 2210 *sf, 2240*sf); //Mev -> TeV
-		RooRealVar sigma("sigma", "width of gauss", 10*sf, sf, 20*sf);
+		RooRealVar mean("mean", "mean of gauss", 2220 * sf, 2210 *sf, 2235*sf); //Mev -> TeV
+		RooRealVar sigma("sigma", "width of gauss", 1*sf, sf, 20*sf);
 		RooGaussian gauss("gauss", "signal gaussian", x_var, mean, sigma);
 	
 		RooRealVar x_var0("x_var0", "endpoint", x_max, x_min, x_max*2);
@@ -109,7 +107,7 @@ int main() {
 		RooRealVar x_0("x_0", "threshold", x_min, x_min*0.5, x_min*1.2);
 		RooRealVar p0("p0", "power", 17, 8, 25);
 		RooRealVar a0("a0", "a0", 0, -20, 20);
-		RooRealVar b0("b0", "b0", 0, -20, 40);
+		RooRealVar b0("b0", "b0", 40, -20, 60);
 		RooRealVar c0("c0", "c0", -80, -80, 1);
 
 		RooAbsPdf* Background = ThresholdBackgroundPdf("threshbkg", "threshbkg", x_var, x_0, p0, a0, b0, c0);
