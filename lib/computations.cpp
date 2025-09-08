@@ -194,9 +194,9 @@ RooAddPdf* BiGaussianPdf(const char* name, const char* title,
         RooRealVar& x, RooRealVar& mu1, RooRealVar& sigma1,
         RooRealVar& mu2, RooRealVar& sigma2, RooRealVar& frac)
 {
-    RooGaussian g1(TString(name)+"_g1", TString(title)+" g1", x, mu1, sigma1);
-    RooGaussian g2(TString(name)+"_g2", TString(title)+" g2", x, mu2, sigma2);
-    return new RooAddPdf(name, title, RooArgList(g1, g2), RooArgList(frac));
+    RooGaussian* g1 = new RooGaussian(TString(name)+"_g1", TString(title)+" g1", x, mu1, sigma1);
+    RooGaussian* g2 = new RooGaussian(TString(name)+"_g2", TString(title)+" g2", x, mu2, sigma2);
+    return new RooAddPdf(name, title, RooArgList(*g1, *g2), RooArgList(frac));
 }
 
 

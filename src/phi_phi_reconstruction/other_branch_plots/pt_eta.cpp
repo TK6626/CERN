@@ -47,11 +47,16 @@ int main() {
 			},{"phi_four_momentum"});
 
 		df.Foreach(
-			[&h_2d, &h_pt, h_eta] (const RVecF pt, const RVecF p) {	
-						h_2d->Fill(Sum(eta), Sum(pt));
-						h_pt->Fill(Sum(pt));
-						h_eta->Fill(Sum(eta));
-			}, {"trk_pt", "kaon_four_momentum"}
+			[&h_2d, &h_pt, h_eta] (const RVecLorCyl p4) {	
+				
+				LorCyl P = p4[0] + p4[1] + p4[2] + p4[3];
+				Float_t eta = P.Eta();
+				Float_t pt = P.Pt();
+
+				h_2d->Fill(eta, pt);
+				h_pt->Fill(pt);
+				h_eta->Fill(eta);
+			}, {"kaon_four_momentum"}
 		);
 
 		h_2d->SetTitle(TString::Format("Energy loss against momentum;Total p_t (GeV/c) [%.3g]; Total #eta [%.3g]", h_2d->GetYaxis()->GetBinWidth(1),  h_2d->GetXaxis()->GetBinWidth(1)));
