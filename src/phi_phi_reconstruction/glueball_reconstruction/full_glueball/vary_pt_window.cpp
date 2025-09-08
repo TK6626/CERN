@@ -62,16 +62,20 @@ int main() {
 
 		Float_t low_pt = pt - 0.25; // GeV
 		Float_t high_pt = pt + 0.25; // GeV
-		Float_t low_eta = 3; // GeV
-		Float_t high_eta = 9.0; // GeV
+		Float_t low_eta = 1.5; // GeV
+		Float_t high_eta = 2.5; // GeV
 
 		RN df = df_df.Filter(
 				[low_pt, high_pt](const RVecF pt) {
 					return ((low_pt < Sum(pt)) && (Sum(pt) < high_pt));
 				}, {"trk_pt"})
-		.Filter([low_eta, high_eta] (const RVecF eta) {
-					return ((low_eta < Sum(eta)) && (Sum(eta) < high_eta));
-				},{"trk_eta"})
+		.Filter([low_eta, high_eta] (const RVecLorCyl p) {
+				LorCyl P = p[0] + p[1] + p[2] + p[3]; 	
+				Float_t eta = P.Eta();
+					return ((low_eta < eta) && (eta < high_eta)
+							||	
+							(-low_eta > eta) && (eta > -high_eta));
+				},{"kaon_four_momentum"})
 		.Filter([&hist, mass_bound, phi_mass](const RVecLorCyl p) {
 			return (
 				(TMath::Abs((p[0].M() - phi_mass)) < mass_bound)  

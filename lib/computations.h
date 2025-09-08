@@ -34,6 +34,9 @@ RooGenericPdf* LogThresholdBackgroundPdf(
     RooRealVar& x_var, RooRealVar& x_var0,
     RooRealVar& p, RooRealVar& a, RooRealVar& b, RooRealVar& c, RooRealVar& C);
 
+RooAddPdf* CubicExpPdf(const char* name, const char* title,
+        RooRealVar& x, RooRealVar& a, RooRealVar& b,
+        RooRealVar& c);
 
 
 
