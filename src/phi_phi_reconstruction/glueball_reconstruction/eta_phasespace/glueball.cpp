@@ -46,16 +46,12 @@ int main() {
 	// constants 
 	Float_t kaon_mass = m_kaon_char / 1e3;
 	Float_t phi_mass = m_phi /1e3;
-	RVecF mass= {25, 20, 15, 10, 5};
 
-
+	Float_t low_eta = 4; // GeV
 	Float_t high_eta = 10; // GeV
-	RVecF eta_low_bounds = {0, 0.5, 1, 1.5, 2, 2.5, 3};
-	mass /= 1e3;
-	Int_t nbins = 150;
+	Int_t nbins = 100;
 
-	for (const Float_t low_eta : eta_low_bounds){
-	for (const Float_t mass_bound : mass) {
+	Float_t mass_bound = 20/1e3;
 
 	RVecStr topology = {"20", "40"};
 	ROOT::EnableImplicitMT();
@@ -139,7 +135,7 @@ int main() {
 		TLine* l1 = DrawLine(2220, 0, hist, kVertical); 
 		TCanvas* can = new TCanvas("can", "c", 600, 800);
 		RVecDraw dat = {{hist, "EP"}, {hModel, "C"}, {hSignal, "HIST"}, {hBackground, "HIST"}, {hist, "EP"}, {leg, ""}};
-		SaveCanvas(can, dat, TString::Format("media/root_files/phi_phi_reconstruction/glueball_reconstruction/eta_phasespace/"+ topo +"/%.3g/mass_bound=%.3g_MeV.root", low_eta, mass_bound*1e3), "RECREATE");
+		SaveCanvas(can, dat, TString::Format("media/root_files/phi_phi_reconstruction/glueball_reconstruction/eta_phasespace/"+ topo +"/peak_centered/low=%.3g_high=%.3g_mass_bound=%.3g_MeV.root", low_eta, high_eta, mass_bound*1e3), "RECREATE");
 		
 		delete can;
 		delete l1;
@@ -148,8 +144,6 @@ int main() {
 		delete hSignal;
 		delete hBackground;	
 	}	
-	}
-	}
 	return 0;
 }
 

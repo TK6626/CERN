@@ -200,12 +200,12 @@ RooAddPdf* BiGaussianPdf(const char* name, const char* title,
 }
 
 
-RooAddPdf* CubicExpPdf(const char* name, const char* title,
+RooGenericPdf* CubicExpPdf(const char* name, const char* title,
         RooRealVar& x, RooRealVar& a, RooRealVar& b,
         RooRealVar& c)
 {
     TString expr = "exp(@1*pow(@0 - @2,3) + @2*pow(@0 - @2,2) + @3*(@0 - @2))";
-	return new RooAddPdf(name, title, expr, RooArgList(x, a, b, c));
+	return new RooGenericPdf(name, title, expr, RooArgList(x, a, b, c));
 }
 
 

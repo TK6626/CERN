@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 
-#include "TCanvas.h"
-#include "TH1.h"
+#include "TCanvas.h" #include "TH1.h"
 #include "TH2.h"
 #include "TLegend.h"
 #include "THStack.h"
