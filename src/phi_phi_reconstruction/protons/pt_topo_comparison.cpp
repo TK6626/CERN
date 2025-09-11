@@ -34,12 +34,12 @@ int main() {
 	
 	// constants 
 	Float_t kaon_mass = m_kaon_char / 1e3;
-	Float_t phi_mass = (m_phi+100) /1e3;
-	RVecF mass= {25, 50,  50000};
+	Float_t phi_mass = (m_phi + 50) /1e3;
+	RVecF mass= {15, 20, 25};
 	mass /= 1e3;
 	Int_t nbins = 150;
 	
-	Float_t pt_low = 0;
+	Float_t pt_low = 0.05;
 	Float_t pt_high = 0.15;
 
 	RVecStr pairs = {"first", "second", "both"};
@@ -155,11 +155,11 @@ int main() {
 		TLegend* leg2 = new TLegend(0.7,0.7, 0.9,0.9);
 		leg2->AddEntry(hist_phi_2, "Diagonal");
 		leg2->AddEntry(hist_phi_4, "Parallel");
-		leg2->AddEntry(l1, "Mass Centre");
+		leg2->AddEntry(l1, TString::Format("M=%.2fGeV/c",2*phi_mass));
 		RVecDraw dat2 = {
 			{hist_phi_2, "HIST"},
 			{hist_phi_4, "HIST"},
-			{l1, TString::Format("M=%3.gGeV/c",2*phi_mass)},
+			{l1, ""},
 			{leg2, ""}
 		};
 
