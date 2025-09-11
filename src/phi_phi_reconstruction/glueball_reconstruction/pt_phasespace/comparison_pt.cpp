@@ -35,10 +35,10 @@ int main() {
 	
 	// constants 
 	Float_t kaon_mass = m_kaon_char / 1e3;
-	Float_t phi_mass = m_phi /1e3;
-	RVecF mass= {15, 20, 25, 40};
+	Float_t phi_mass = (m_phi) /1e3;
+	RVecF mass= {25, 60, 50000};
 	mass /= 1e3;
-	Int_t nbins = 150;
+	Int_t nbins = 700;
 
 	RVecStr pairs = {"first", "second", "both"};
 
@@ -51,8 +51,8 @@ int main() {
 		RDF df_df_2("tree", file2);
 		RDF df_df_4("tree", file4);
 	
-		TH1F* hist_both = new TH1F("hist", "hist", nbins, 0, 2.5); 
-		hist_both->SetTitle(TString::Format("Total P_{t} comparison across Topologies;p_{t} (GeV/c);Events [%.3g GeV/c]", hist_both->GetXaxis()->GetBinWidth(1))); 
+		TH1F* hist_both = new TH1F("hist", "hist", nbins, 0, 1.7); 
+		hist_both->SetTitle(TString::Format("Total p_{t} comparison across Topologies;p_{t} (GeV/c);Events [%.3g GeV/c]", hist_both->GetXaxis()->GetBinWidth(1))); 
 		hist_both->SetLineWidth(2);
 		
 		TH1F* hist_p2 = (TH1F*)hist_both->Clone(TString::Format("#phi Diagonal " + pairing)); hist_p2->SetLineColor(kGreen);
@@ -73,7 +73,23 @@ int main() {
 					&&
 					massWindowCheck(p, phi_mass, mass_bound, 2, 3));
 				} else std::cout << "something went wrong" << std::endl; return false;
-		}, {"phi_four_momentum"});
+		}, {"phi_four_momentum"})
+			.Foreach(
+    		[hist_both, hist_p2, hist_kaon_2, pairing](const RVecLorCyl &pk, const RVecLorCyl &pp) {
+        	Float_t P_k = (pk[0] + pk[1] + pk[2] + pk[3]).Pt();
+			hist_kaon_2->Fill(P_k);
+        	
+			if (pairing == "first") {
+            	hist_p2->Fill((pp[0] + pp[1]).Pt());
+        	} else if (pairing == "second") {
+            	hist_p2->Fill((pp[2] + pp[3]).Pt());
+        	} else if (pairing == "both") {
+            	hist_p2->Fill((pp[0] + pp[1]).Pt());
+            	hist_p2->Fill((pp[2] + pp[3]).Pt());
+        		hist_kaon_2->Fill(P_k); // account for double filling of phis
+        	}
+   			}, {"kaon_four_momentum", "phi_four_momentum"}
+		);
 
 		df_df_4.Filter(
 			[phi_mass, mass_bound, pairing](const RVecLorCyl p) {
@@ -86,26 +102,9 @@ int main() {
 					&&
 					massWindowCheck(p, phi_mass, mass_bound, 2, 3));
 				} else std::cout << "something went wrong" << std::endl; return false;
-		}, {"phi_four_momentum"});
+		}, {"phi_four_momentum"})
 
-
-		df_df_2.Foreach(
-    		[hist_both, hist_p2, hist_kaon_2, pairing](const RVecLorCyl &pk, const RVecLorCyl &pp) {
-        	Float_t P_k = (pk[0] + pk[1] + pk[2] + pk[3]).Pt();
-        	hist_kaon_2->Fill(P_k);
-
-        	if (pairing == "first") {
-            	hist_p2->Fill((pp[0] + pp[1]).Pt());
-        	} else if (pairing == "second") {
-            	hist_p2->Fill((pp[2] + pp[3]).Pt());
-        	} else if (pairing == "both") {
-            	hist_p2->Fill((pp[0] + pp[1]).Pt());
-            	hist_p2->Fill((pp[2] + pp[3]).Pt());
-        	}
-   			}, {"kaon_four_momentum", "phi_four_momentum"}
-		);
-
-		df_df_4.Foreach(
+			.Foreach(
 			[hist_both, hist_p4, hist_kaon_4, pairing](const RVecLorCyl pk, const RVecLorCyl pp) {
         	
 			Float_t P_k = (pk[0] + pk[1] + pk[2] + pk[3]).Pt();
@@ -118,6 +117,7 @@ int main() {
         	} else if (pairing == "both") {
             	hist_p4->Fill((pp[0] + pp[1]).Pt());
             	hist_p4->Fill((pp[2] + pp[3]).Pt());
+        		hist_kaon_4->Fill(P_k); // account for double filling of phis
 			}	
 			}, {"kaon_four_momentum", "phi_four_momentum"}
 		);
@@ -132,9 +132,9 @@ int main() {
 		leg->AddEntry(hist_kaon_2, "K Diagonal");
 		leg->AddEntry(hist_kaon_4, "K Parallel");
 		RVecDraw dat = {
-			{hist_kaon_4, "HIST"},
 			{hist_kaon_2, "HIST"},
 			{hist_p2, "HIST"},
+			{hist_kaon_4, "HIST"},
 			{hist_p4, "HIST"},
 			{leg, ""}
 		};

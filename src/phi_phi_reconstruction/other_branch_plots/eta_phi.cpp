@@ -6,7 +6,6 @@
 #include "TLegend.h"
 #include "TCanvas.h"
 
-
 #include "../../../lib/computations.h"
 #include "../../../lib/admin_utils.h"
 #include "../../../lib/plotting_params.h"
@@ -20,11 +19,15 @@ int main() {
 	// set up transparant colours for use later
 	Float_t kaon_mass = m_kaon_char / 1e3;
 	Float_t phi_mass = m_phi / 1e3;
-	Float_t mass_bound = 50000 / 1e3; 
+	RVecF mass = {20, 50, 50000}; 
+	mass /=1e3;
+
+	gStyle->SetOptStat(0);
 
 	RVecStr topology = {"20", "40"};
 	ROOT::EnableImplicitMT();
-	
+
+	for (Float_t mass_bound : mass) {
 		
 	for (TString topo : topology) {
 
@@ -83,9 +86,9 @@ int main() {
 			}, {"phi_four_momentum"}
 		);
 	
-		hist_pair1->SetTitle(TString::Format("#phi #eta Comparison;Total #eta [%.3g]; #phi (rad) [%.3g]", hist_pair1->GetXaxis()->GetBinWidth(1),  hist_pair1->GetYaxis()->GetBinWidth(1)));
-		hist_pair2->SetTitle(TString::Format("#phi #eta Comparison;Total #eta [%.3g]; #phi (rad) [%.3g]", hist_pair2->GetXaxis()->GetBinWidth(1),  hist_pair2->GetYaxis()->GetBinWidth(1)));
-		hist_both->SetTitle(TString::Format("#phi  #eta Comparison;Total #eta [%.3g]; #phi (rad) [%.3g]", hist_both->GetXaxis()->GetBinWidth(1),  hist_both->GetYaxis()->GetBinWidth(1)));
+		hist_pair1->SetTitle(TString::Format("Total #phi-#eta Comparison;Total #eta [%.3g]; Total #phi (rad) [%.3g]", hist_pair1->GetXaxis()->GetBinWidth(1),  hist_pair1->GetYaxis()->GetBinWidth(1)));
+		hist_pair2->SetTitle(TString::Format("Total #phi-#eta Comparison;Total #eta [%.3g]; Total #phi (rad) [%.3g]", hist_pair2->GetXaxis()->GetBinWidth(1),  hist_pair2->GetYaxis()->GetBinWidth(1)));
+		hist_both->SetTitle(TString::Format("Total #phi-#eta Comparison;Total #eta [%.3g]; Total #phi (rad) [%.3g]", hist_both->GetXaxis()->GetBinWidth(1),  hist_both->GetYaxis()->GetBinWidth(1)));
 	
 		RVecDraw dat1 = {{hist_pair1, "COLZ"}};
 		RVecDraw dat2 = {{hist_pair2, "COLZ"}};
@@ -101,6 +104,7 @@ int main() {
 		delete hist_pair1;
 		delete hist_pair2;
 		delete hist_both;
+	}
 	}
 	return 0;
 }

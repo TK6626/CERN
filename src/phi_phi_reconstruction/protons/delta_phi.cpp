@@ -22,7 +22,7 @@ int main() {
 	Float_t kaon_mass = m_kaon_char / 1e3;
 	Float_t phi_mass = m_phi / 1e3;
 	Float_t Pi = pi;
-	RVecF mass = {10, 20, 30, 50, 50000};
+	RVecF mass = {25, 50000};
 	mass /= 1e3; 
 
 	RVecStr topology = {"20", "40"};
@@ -62,9 +62,9 @@ int main() {
 			}, {"pr_px_a", "pr_py_a", "pr_px_b", "pr_py_b"}
 		);
 	
-		hist_both->SetTitle(TString::Format("Proton #Delta #phi;#Delta #phi (rad); Events [%.3g]", hist_both->GetXaxis()->GetBinWidth(1)));
+		hist_both->SetTitle(TString::Format("Proton #Delta#phi;#Delta#phi (rad); Events [%.3g]", hist_both->GetXaxis()->GetBinWidth(1)));
 		RVecDraw dat = {{hist_both, "HIST"}};
-		SaveCanvas(c1, dat, TString::Format("media/root_files/phi_phi_reconstruction/protons/delta_phi/"+topo+"/mass_cut=%.4gMeV.root", mass_bound*1e3), "UPDATE");
+		SaveCanvas(c1, dat, TString::Format("media/root_files/phi_phi_reconstruction/protons/delta_phi/"+topo+"/mass_cut=%.4gMeV.root", mass_bound*1e3), "RECREATE");
 		
 		delete c1;
 		delete hist_both;

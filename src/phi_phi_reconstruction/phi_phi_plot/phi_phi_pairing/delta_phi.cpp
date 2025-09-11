@@ -20,13 +20,15 @@ int main() {
 	// set up transparant colours for use later
 	Float_t kaon_mass = m_kaon_char / 1e3;
 	Float_t phi_mass = m_phi / 1e3;
-	Float_t mass_bound = 100000 / 1e3; 
+	RVecF  mass = {25, 50, 50000};
+	mass /=1e3; 
 	Float_t Pi = pi;
 
 	RVecStr topology = {"20", "40"};
 	ROOT::EnableImplicitMT();
+	gStyle->SetOptStat(0);	
 	
-		
+	for (Float_t mass_bound : mass) {
 	for (TString topo : topology) {
 
 		TString file = TString::Format("data/phi_phi_reconstruction/uncut_SNR_"	+ topo + ".root");
@@ -34,9 +36,9 @@ int main() {
 		TCanvas* c1 = new TCanvas("c1", "c1", 600, 800);
 		TCanvas* c2 = new TCanvas("c2", "c3", 600, 800);
 		TCanvas* c3 = new TCanvas("c3", "c3", 600, 800);
-		TH1F* hist_both = new TH1F("hist_both", "", 200, -Pi, Pi);
-		TH1F* hist1 = new TH1F("hist2", "", 200, -3.2*1e-3, 3.2*1e-3);
-		TH1F* hist2 = new TH1F("hist1", "", 200, -3.2*1e-3, 3.2*1e-3);
+		TH1F* hist_both = new TH1F("hist_both", "", 200, 0, Pi);
+		TH1F* hist1 = new TH1F("hist2", "", 800, -3.2*1e-3, 3.2*1e-3);
+		TH1F* hist2 = new TH1F("hist1", "", 800, -3.2*1e-3, 3.2*1e-3);
 
 
 		RN df1 = df_df.Filter([phi_mass, mass_bound] (const RVecLorCyl p) {
@@ -50,14 +52,14 @@ int main() {
 			[&hist_both, &hist1, Pi] (const RVecLorCyl p) {	
 				
 				
-				Float_t phi1 = std::fmod(p[0].Phi() - p[1].Phi() + 3*Pi, 2*Pi) - Pi;
-				Float_t phi2 = std::fmod(p[2].Phi() - p[3].Phi() + 3*Pi, 2*Pi) - Pi;	
+				Float_t phi1 = std::fmod(p[0].Phi() - p[1].Phi() + 3*Pi, Pi);
+				Float_t phi2 = std::fmod(p[2].Phi() - p[3].Phi() + 3*Pi, Pi);	
 				hist_both->Fill(phi1);
 				hist_both->Fill(phi2);
 			}, {"phi_four_momentum"}
 		);
 				
-		hist_both->SetTitle(TString::Format("#Delta #phi Between possible #phi#phi Pairings;Total #phi (mrad);Events  [%.3g]", hist_both->GetXaxis()->GetBinWidth(1)));
+		hist_both->SetTitle(TString::Format("#Delta#phi Between Possible #phi#phi Pairings;#Delta#phi (rad);Events  [%.3g]", hist_both->GetXaxis()->GetBinWidth(1)));
 	
 		RVecDraw dat = {{hist_both, "HIST"}};
 		
@@ -69,6 +71,7 @@ int main() {
 		delete hist_both;
 		delete hist1;
 		delete hist2;
+	}
 	}
 	return 0;
 }
