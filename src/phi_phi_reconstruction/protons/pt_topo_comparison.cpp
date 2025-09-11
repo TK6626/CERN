@@ -34,16 +34,18 @@ int main() {
 	
 	// constants 
 	Float_t kaon_mass = m_kaon_char / 1e3;
-	Float_t phi_mass = m_phi /1e3;
-	RVecF mass= {10, 25, 50, 100, 200, 300};
+	Float_t phi_mass = (m_phi+100) /1e3;
+	RVecF mass= {25, 50,  50000};
 	mass /= 1e3;
 	Int_t nbins = 150;
-	Float_t pt_low = 0.3;
-	Float_t pt_high = 0.5;
+	
+	Float_t pt_low = 0;
+	Float_t pt_high = 0.15;
 
 	RVecStr pairs = {"first", "second", "both"};
 	for (const Float_t mass_bound : mass) {
 	ROOT::EnableImplicitMT();
+	gStyle->SetOptStat(0);
 		
 	for (const TString pairing : pairs) {
 		TString file2 = TString::Format("data/phi_phi_reconstruction/uncut_SNR_20.root");
@@ -52,20 +54,21 @@ int main() {
 		RDF df_df_4("tree", file4);
 	
 		TH1F* hist_both = new TH1F("hist 1", "hist 1", nbins, 0, 1.7); 
-		hist_both->SetTitle(TString::Format("Total P_{t} comparison across Topologies;p_{t} (GeV/c);Events [%.3g GeV/c]", hist_both->GetXaxis()->GetBinWidth(1))); 
-		hist_both->SetLineWidth(2);
+		hist_both->SetTitle(TString::Format("Total p_t Comparison Across Topologies;p_{t} (GeV/c);Events [%.3g GeV/c]", hist_both->GetXaxis()->GetBinWidth(1))); 
+		hist_both->SetLineWidth(3);
 		
 		TH1F* hist_2 = (TH1F*)hist_both->Clone(TString::Format("Proton Diagonal "+pairing)); hist_2->SetLineColor(kRed);
 		TH1F* hist_4 = (TH1F*)hist_both->Clone(TString::Format("Proton Parallel "+pairing)); hist_4->SetLineColor(kBlue);
 		
-		Int_t n = 200;
-		TH1F* hist_phi = new TH1F("hist mass", "hist mass", n, 0, 10); 
+		Int_t n = 220;
+		TH1F* hist_phi = new TH1F("hist mass", "hist mass", n, 1.8, 5); 
 		hist_phi->SetTitle(TString::Format("X mass %s;M (GeV/c);Events [%.3g GeV/c]", pairing.Data(), hist_both->GetXaxis()->GetBinWidth(1))); 
-		hist_phi->SetLineWidth(2);
+		hist_phi->SetLineWidth(3);
 		
 		TH1F* hist_phi_2 = (TH1F*)hist_phi->Clone(TString::Format("X mass Diagonal "+pairing)); hist_phi_2->SetLineColor(kRed);
 		TH1F* hist_phi_4 = (TH1F*)hist_phi->Clone(TString::Format("X mass Parallel "+pairing)); hist_phi_4->SetLineColor(kBlue);
-		gStyle->SetOptStat(111111);
+		//gStyle->SetOptStat(111111);
+		gStyle->SetOptStat(0);
 
 		df_df_2.Filter(
 			[phi_mass, mass_bound, pairing](const RVecLorCyl p) {
@@ -138,7 +141,7 @@ int main() {
 		TCanvas* c = new TCanvas(TString::Format("c " + pairing), TString::Format("c " + pairing));
 		TCanvas* c_phi = new TCanvas(TString::Format("c mass " + pairing), TString::Format("c " + pairing));
 
-		TLegend* leg = new TLegend(0.65,0.4, 0.9,0.65);
+		TLegend* leg = new TLegend(0.7,0.7, 0.9,0.9);
 		//leg1->AddEntry(hist_both, "Diagonal + Parallel");
 		leg->AddEntry(hist_2, "Diagonal");
 		leg->AddEntry(hist_4, "Parallel");
@@ -147,13 +150,16 @@ int main() {
 			{hist_4, "HIST"},
 			{leg, ""}
 		};
-
-		TLegend* leg2 = new TLegend(0.65,0.4, 0.9,0.65);
+		
+		TLine* l1 = DrawLine(2*phi_mass, 0, hist_phi_2, kVertical, kBlack, 3, kDashed);
+		TLegend* leg2 = new TLegend(0.7,0.7, 0.9,0.9);
 		leg2->AddEntry(hist_phi_2, "Diagonal");
 		leg2->AddEntry(hist_phi_4, "Parallel");
+		leg2->AddEntry(l1, "Mass Centre");
 		RVecDraw dat2 = {
 			{hist_phi_2, "HIST"},
 			{hist_phi_4, "HIST"},
+			{l1, TString::Format("M=%3.gGeV/c",2*phi_mass)},
 			{leg2, ""}
 		};
 
