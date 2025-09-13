@@ -20,7 +20,7 @@
 #include "RooAddPdf.h"
 #include "RooGenericPdf.h"
 #include "RooDataHist.h"
-#include "RooPlot.h"
+
 #include "RooFitResult.h"
 #include "RooFormulaVar.h"
 
@@ -67,7 +67,7 @@ int main() {
 		RN df = df_df.Filter(
 				[&low_pt, &high_pt](const RVecF pt) {
 				return ((low_pt < Sum(pt)) && (Sum(pt) < high_pt));
-				}, {"trk_pt"});
+				}, {"trk_pt"})
 
 		df.Foreach(
 			[&hist, mass_bound, phi_mass](const RVecLorCyl p) {

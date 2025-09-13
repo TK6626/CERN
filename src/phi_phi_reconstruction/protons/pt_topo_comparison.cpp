@@ -34,13 +34,13 @@ int main() {
 	
 	// constants 
 	Float_t kaon_mass = m_kaon_char / 1e3;
-	Float_t phi_mass = (m_phi + 50) /1e3;
+	Float_t phi_mass = (m_phi) /1e3;
 	RVecF mass= {15, 20, 25};
 	mass /= 1e3;
 	Int_t nbins = 150;
 	
-	Float_t pt_low = 0.05;
-	Float_t pt_high = 0.15;
+	Float_t pt_low = 0.0;
+	Float_t pt_high = 0.04;
 
 	RVecStr pairs = {"first", "second", "both"};
 	for (const Float_t mass_bound : mass) {
@@ -60,7 +60,7 @@ int main() {
 		TH1F* hist_2 = (TH1F*)hist_both->Clone(TString::Format("Proton Diagonal "+pairing)); hist_2->SetLineColor(kRed);
 		TH1F* hist_4 = (TH1F*)hist_both->Clone(TString::Format("Proton Parallel "+pairing)); hist_4->SetLineColor(kBlue);
 		
-		Int_t n = 220;
+		Int_t n = 300;
 		TH1F* hist_phi = new TH1F("hist mass", "hist mass", n, 1.8, 5); 
 		hist_phi->SetTitle(TString::Format("X mass %s;M (GeV/c);Events [%.3g GeV/c]", pairing.Data(), hist_both->GetXaxis()->GetBinWidth(1))); 
 		hist_phi->SetLineWidth(3);

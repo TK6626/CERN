@@ -59,7 +59,12 @@ int main() {
 
 
 	// because usefull define the SNR (signicance) branches here
-	df.Define("trk_dz_snr", [] (Int_t ntrk, RVecF z, RVecF err)
+	df
+		// introduce cut that removes events that occur too far from the inteaction point
+		.Filter()
+
+
+		.Define("trk_dz_snr", [] (Int_t ntrk, RVecF z, RVecF err)
 			{
 				RVecF result(ntrk);
         		for (Int_t i = 0; i < ntrk; ++i) {

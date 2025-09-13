@@ -6,13 +6,13 @@
 #include "TLine.h"
 #include "TLorentzVector.h"
 
-#include "../../../lib/cut_branch.h"
-#include "../../../lib/computations.h"
-#include "../../../lib/apply_cuts.cpp"
-#include "../../../lib/plotting_params.h"
-#include "../../../lib/admin_utils.h"
+#include "../../../../lib/cut_branch.h"
+#include "../../../../lib/computations.h"
+#include "../../../../lib/apply_cuts.cpp"
+#include "../../../../lib/plotting_params.h"
+#include "../../../../lib/admin_utils.h"
 
-// !./bashing/run_file.sh phi_phi_reconstruction/glueball_reconstruction/glueball_trk_eta
+// !./bashing/run_file.sh phi_phi_reconstruction/glueball_reconstruction/track_cuts/glueball_trk_eta
 
 
 /** make cuts on data to 
@@ -37,7 +37,7 @@ int main() {
 	for (const Float_t bound : track_bound) {
 	for (const Float_t mass_bound : mass) {
 
-	Float_t lower_bound = -bound;
+	Float_t lower_bound = 0.4;
 	Float_t upper_bound = bound; 
 	RVecStr topology = {"20", "40"};
 	ROOT::EnableImplicitMT();
@@ -51,14 +51,10 @@ int main() {
 	
 		RN df = df_df;
 		df.Filter( 
-			[lower_bound, upper_bound](const RVecF& q) {
-        	for (const Float_t val : q) {
-            	if (!(lower_bound < val && val < upper_bound)) {
-                	return false;
-            	}
-        	}
-        	return true;
-		}, {branch}
+			[lower_bound, upper_bound](const RVecLorCyl& q) {
+			LorCyl P =  q[0] + q[1] + q[2] +q[3];
+        	return 	(lower_bound < P.Eta()) && (upper_bound > P.Eta());
+		}, {"kaon_four_momentum"}
 		)
 		.Foreach(
 			[&h, mass_bound, phi_mass](const RVecLorCyl p) {
@@ -79,7 +75,7 @@ int main() {
 		h->SetTitle(TString::Format("Invariant X Mass;M (MeV/c^{2});Events [%.2g MeV]", h->GetXaxis()->GetBinWidth(1)));
 		TLine* l1 = DrawLine(2220, 0, h, kVertical, kRed, 3, kDashed);
 		RVecDraw dat = {{h, "HIST"}, {l1, ""}};
-		SaveCanvas(c, dat, TString::Format("media/root_files/phi_phi_reconstruction/glueball_reconstruction/%s/"+ topo +"/<%.3g/mass_bound=%.3g_MeV.root",branch, bound,  mass_bound*1e3), "RECREATE");
+		SaveCanvas(c, dat, TString::Format("media/root_files/phi_phi_reconstruction/glueball_reconstruction/track_cuts/%s/"+ topo +"/<%.3g/mass_bound=%.3g_MeV.root",branch, bound,  mass_bound*1e3), "UPDATE");
 		
 		delete h;
 		delete c;
