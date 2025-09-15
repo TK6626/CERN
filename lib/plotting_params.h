@@ -13,6 +13,17 @@ const ROOT::VecOps::RVec<UInt_t> color_scheme = {kP10Cyan, kP10Ash, kP10Green, k
 
 void SetPlotStyle();
 
+/*
+cx->SetTopMargin(0.02);
+cy->SetTopMargin(0.02);
+cx->SetRightMargin(0.05);
+cy->SetRightMargin(0.05);
+hist_x->GetXaxis()->SetTitleOffset(1.2);
+hist_y->GetXaxis()->SetTitleOffset(1.2);
+gStyle->SetOptStat(111110); 
+
+*/
+
 
 
 // Forward declarations

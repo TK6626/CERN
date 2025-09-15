@@ -27,7 +27,7 @@ int main() {
 	Float_t phi_mass = m_phi /1e3;
 	
 	TString branch = "dxy";
-	RVecF cut = {3, 2, 1, 0.5, 0.2, 0.1, 0.08, 0.05};
+	RVecF cut = {0.4, 0.2, 0.1, 0.08};
 
 	RVecStr topology = {"20", "40"};
 	ROOT::EnableImplicitMT();
@@ -38,7 +38,12 @@ int main() {
 		RDF df_df("tree", file);
 	
 		TCanvas* c = new TCanvas("c");
-		TH2F* h = new TH2F("h", "h", 350, 980, 1250, 350, 980, 1250);
+		TH2F* h = new TH2F("h", "h", 100, 980, 1300, 100, 980, 1300);
+		c->SetTopMargin(0.02);
+		c->SetRightMargin(0.1);
+		h->GetXaxis()->SetTitleOffset(1.2);
+		gStyle->SetOptStat(1110); 
+
 	
 		RN df = CutApplier(df_df)
 			.apply_dxy_cut(-val, val)
@@ -52,7 +57,7 @@ int main() {
 			
 			}, {"phi_four_momentum"}
 		);
-		h->SetTitle("Invariant K^{+}K^{-} Mass;M_{1} (MeV/c^{2});M_{2} (MeV/c^{2})");
+		h->SetTitle(";M_{1} (MeV/c^{2});M_{2} (MeV/c^{2})");
 		h->Draw();
 		RVecDraw dat = {{h, "COLZ"}};
 		SaveCanvas(c, dat, TString::Format("media/root_files/phi_phi_reconstruction/phi_phi_plot/"+branch+"/"+topo+"/%.2f_cut.root", val), "RECREATE");

@@ -34,8 +34,14 @@ int main(){
 		RDF df_df("tree", file);
 		RN df = df_df;
 		TCanvas* c = new TCanvas("c", "c", 600, 800);
-		TH2F* h_invar = new TH2F("h_invar", "Invariant K^{-}K^{+} Mass;M_{1} (MeV/c^{2});M_{2} (MeV/c^{2})", 100, 985, 1200, 100, 985,1200);
+		TH2F* h_invar = new TH2F("h_invar", ";M_{1} (MeV/c^{2});M_{2} (MeV/c^{2})", 100, 985, 1300, 100, 985,1300);
 		
+		c->SetTopMargin(0.02);
+		c->SetRightMargin(0.1);
+		h_invar->GetXaxis()->SetTitleOffset(1.2);
+		gStyle->SetOptStat(1110); 
+
+	
 		df.Foreach(
 			[&h_invar] (const RVecLorCyl p4) {
 
@@ -47,8 +53,11 @@ int main(){
 		TLine* l1 = DrawLine(phi_mass * 1e3, 0, h_invar, kVertical, kRed, 2, kDashed);
 		TLine* l2 = DrawLine(phi_mass * 1e3, 0, h_invar, kHorizontal, kRed, 2, kDashed);
 		c->Update();
-		RVecDraw dat = {{h_invar, "COLZ"}, {l1, ""}, {l2, ""}};
-		SaveCanvas(c, dat, TString::Format("media/root_files/phi_phi_reconstruction/phi_phi_plot/initial_reconstruction/" + topo + "/Invariant_KK_mass_zoomed.root"), "RECREATE");
+		RVecDraw dat = {
+			{h_invar, "COLZ"}
+	//		, {l1, ""}, {l2, ""}
+		};
+		SaveCanvas(c, dat, TString::Format("media/root_files/phi_phi_reconstruction/phi_phi_plot/initial_reconstruction/" + topo + "/Invariant_KK_mass.root"), "RECREATE");
 	delete h_invar;
 	delete c;
 	delete l1;

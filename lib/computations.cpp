@@ -1,8 +1,6 @@
 #include "computations.h"
 #include "TMath.h"
 
-
-
 float calc_inv_mass(const array_4 &p) {
 	return p[0]*p[0] - p[1]*p[1] - p[2]*p[2] - p[3]*p[3];
 }
@@ -14,8 +12,6 @@ array_4 add_4_vec(const array_4 &p1, const array_4 &p2){
 		};
 	return p;
 	}
-
-
 
 /**
  * @brief Gaussian fit function with offset.
@@ -208,7 +204,18 @@ RooGenericPdf* CubicExpPdf(const char* name, const char* title,
 	return new RooGenericPdf(name, title, expr, RooArgList(x, a, b, c));
 }
 
+RooGenericPdf* BivariateGaussianPdf(const char* name, const char* title,
+    RooRealVar& x,   RooRealVar& mux,  RooRealVar& sigx,
+    RooRealVar& y,   RooRealVar& muy,  RooRealVar& sigy,
+    RooRealVar& rho)
+{
+    TString formula =
+        "exp(-0.5/(1-@6*@6)*(((@0-@1)*(@0-@1))/(@2*@2) + "
+        "((@3-@4)*(@3-@4))/(@5*@5) - 2*@6*(@0-@1)*(@3-@4)/(@2*@5)))";
 
+    return new RooGenericPdf(name, title, formula,
+        RooArgList(x, mux, sigx, y, muy, sigy, rho));
+}
 
 
 RooGenericPdf* ThresholdBackgroundPdf(

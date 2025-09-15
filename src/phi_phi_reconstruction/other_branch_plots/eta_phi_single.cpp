@@ -19,12 +19,14 @@ int main() {
 	// set up transparant colours for use later
 	Float_t kaon_mass = m_kaon_char / 1e3;
 	Float_t phi_mass = m_phi / 1e3;
-	RVecF mass = {20, 50, 50000}; 
+	RVecF mass = {20, 50, 5000}; 
 	mass /=1e3;
 
-	gStyle->SetOptStat(11111);
 
-	RVecStr topology = {"20", "40"};
+
+
+
+	RVecStr topology = {"4"};
 	ROOT::EnableImplicitMT();
 
 	for (Float_t mass_bound : mass) {
@@ -36,8 +38,12 @@ int main() {
 		RDF df_df("tree", file);
 
 		TCanvas* c1 = new TCanvas("c1", "c1", 600, 800);
-		TH2F* hist_pair1 = new TH2F("hist_pair1", "", 200, -7, 7, 200, -3.2, 3.2);
+		TH2F* hist_pair1 = new TH2F("hist_pair1", "", 200, -3.2, 3.2, 200, -3.2, 3.2);
 
+		c1->SetTopMargin(0.02);
+		c1->SetRightMargin(0.1);
+		hist_pair1->GetXaxis()->SetTitleOffset(1.2);
+		gStyle->SetOptStat(1110); 
 
 		RN df1 = df_df.Filter([phi_mass, mass_bound] (const RVecLorCyl p) {
 			return 	( 
@@ -54,7 +60,7 @@ int main() {
 			}, {"kaon_four_momentum"}
 		);
 
-		hist_pair1->SetTitle(TString::Format("Kaons #phi-#eta Comparison;Total #eta [%.3g]; Kaon #phi (rad) [%.3g]", hist_pair1->GetXaxis()->GetBinWidth(1),  hist_pair1->GetYaxis()->GetBinWidth(1)));
+		hist_pair1->SetTitle(TString::Format(";#eta [%.3g]; #phi (rad) [%.3g]", hist_pair1->GetXaxis()->GetBinWidth(1),  hist_pair1->GetYaxis()->GetBinWidth(1)));
 		RVecDraw dat1 = {{hist_pair1, "COLZ"}};
 		
 		SaveCanvas(c1, dat1, TString::Format("media/root_files/phi_phi_reconstruction/kaons/eta_phi/"+topo+"/mass_cut=%.4gMeV.root", mass_bound*1e3), "RECREATE");

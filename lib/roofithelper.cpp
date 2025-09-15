@@ -9,6 +9,6 @@ void calc_chi2(RooRealVar& x, RooDataHist& h, RooAbsPdf* model, Int_t nbins){
 	Int_t nParams = model->getParameters(h)->getSize();
 	Int_t ndf = nbins - nParams;
 	Double_t chi2 = chi2PerNDF * ndf;
-	std::cout << "Chi2 = " << chi2 << "\nChi2/ndf = " << chi2PerNDF << std::endl;
+	std::cout << "\nChi2/ndf = " << chi2 << "/" << ndf << " = "<< chi2PerNDF << std::endl;
 };
 

@@ -38,7 +38,10 @@ RooGenericPdf* CubicExpPdf(const char* name, const char* title,
         RooRealVar& x, RooRealVar& a, RooRealVar& b,
         RooRealVar& c);
 
-
+RooGenericPdf* BivariateGaussianPdf(const char* name, const char* title,
+    RooRealVar& x,   RooRealVar& mux,  RooRealVar& sigx,
+    RooRealVar& y,   RooRealVar& muy,  RooRealVar& sigy,
+    RooRealVar& rho);
 
 
 
