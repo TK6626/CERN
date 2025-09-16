@@ -185,16 +185,13 @@ RooGenericPdf* ShiftedArgusPdf(const char* name, const char* title,
 	return new RooGenericPdf(name, title, expr, RooArgList(x_var, x_var0, c, p, shift));
 }
 
-
-RooAddPdf* BiGaussianPdf(const char* name, const char* title,
+/*
+RooGenericPdf* BiGaussianPdf(const char* name, const char* title,
         RooRealVar& x, RooRealVar& mu1, RooRealVar& sigma1,
         RooRealVar& mu2, RooRealVar& sigma2, RooRealVar& frac)
 {
-    RooGaussian* g1 = new RooGaussian(TString(name)+"_g1", TString(title)+" g1", x, mu1, sigma1);
-    RooGaussian* g2 = new RooGaussian(TString(name)+"_g2", TString(title)+" g2", x, mu2, sigma2);
-    return new RooAddPdf(name, title, RooArgList(*g1, *g2), RooArgList(frac));
-}
-
+	TString expr = "@5*exp(-0.5*pow((@0-@1)/@2,2))+(1-@5)*exp(-0.5*pow((@0-@3)/@4,2))";
+*/
 
 RooGenericPdf* CubicExpPdf(const char* name, const char* title,
         RooRealVar& x, RooRealVar& a, RooRealVar& b,

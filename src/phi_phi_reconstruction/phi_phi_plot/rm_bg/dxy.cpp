@@ -38,7 +38,7 @@ int main() {
 		RDF df_df("tree", file);
 	
 		TCanvas* c = new TCanvas("c");
-		TH2F* h = new TH2F("h", "h", 100, 980, 1300, 100, 980, 1300);
+		TH2F* h = new TH2F("h", "h", 300, 980, 1500, 300, 980, 1500);
 		c->SetTopMargin(0.02);
 		c->SetRightMargin(0.1);
 		h->GetXaxis()->SetTitleOffset(1.2);

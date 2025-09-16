@@ -2,77 +2,127 @@
 
 #include "TH1.h"
 #include "TH2.h"
+#include "TF1.h"
 #include "TFile.h"
 #include "TLegend.h"
 #include "TCanvas.h"
+#include "TColor.h"
+#include "TFitResult.h"
 
 
-#include "../../../../lib/computations.h"
-#include "../../../../lib/admin_utils.h"
-#include "../../../../lib/plotting_params.h"
+#include "../../../lib/computations.h"
+#include "../../../lib/admin_utils.h"
+#include "../../../lib/plotting_params.h"
 
 
-// !./bashing/run_file.sh phi_phi_reconstruction/phi_phi_plot/phi_phi_pairing/delta_phi
+// !./bashing/run_file.sh phi_phi_reconstruction/phi_phi_plot/projections
+
 
 int main() {
 
 	SetPlotStyle();
+	
 	// set up transparant colours for use later
-	Float_t kaon_mass = m_kaon_char / 1e3;
-	Float_t phi_mass = m_phi / 1e3;
-	Float_t mass_bound = 20 / 1e3; 
+	
+	Float_t kaon_mass = m_kaon_char;
+	Float_t phi_mass = m_phi;
+	Float_t mass_bound = 10; 
+	Float_t lower_bound = phi_mass - mass_bound; 
+	Float_t upper_bound = phi_mass + mass_bound;
 
-	RVecStr topology = {"20", "40"};
+
+	RVecStr projection_axis = {"x", "y"};
+	RVecStr topology = {"40", "20"};
 	ROOT::EnableImplicitMT();
 	
 		
 	for (TString topo : topology) {
-
-		TString file = TString::Format("data/phi_phi_reconstruction/uncut_SNR_"	+ topo + ".root");
-		RDF df_df("tree", file);
-		TCanvas* c1 = new TCanvas("c1", "c1", 600, 800);
-		TCanvas* c2 = new TCanvas("c2", "c3", 600, 800);
-		TCanvas* c3 = new TCanvas("c3", "c3", 600, 800);
-		TH1F* hist_both = new TH1F("hist_both", "", 200, -3.2 3.2);
-		TH1F* hist1 = new TH1F("hist2", "", 200, -3.2*1e-3, 3.2*1e-3);
-		TH1F* hist2 = new TH1F("hist1", "", 200, -3.2*1e-3, 3.2*1e-3);
-
-
-		RN df1 = df_df.Filter([phi_mass, mass_bound] (const RVecLorCyl p) {
-			return 	( 
-						(TMath::Abs(p[0].M() - phi_mass) < mass_bound) 
-						|| (TMath::Abs(p[1].M() - phi_mass) < mass_bound)
-					);
-			},{"phi_four_momentum"});
-		
-		df1.Foreach(
-			[&hist_both, &hist1] (const RVecLorCyl p) {	
-				
-				
-				Float_t phi1 = p[0].Phi() - p[1].Phi();
-				Float_t phi2 = p[2].Phi() - p[3].Phi(); 
 	
-				hist_both->Fill(phi1);
-				hist_both->Fill(phi2);
-			}, {"phi_four_momentum"}
-		);
-				
-		hist_both->SetTitle(TString::Format("#Delta #phi Between possible #phi#phi Pairings;Total #phi (mrad);Events  [%.3g]", hist_both->GetXaxis()->GetBinWidth(1)));
-	
-		RVecDraw dat = {{hist_both, "HIST"}};
+		TFile* file = new TFile(TString::Format("media/root_files/phi_phi_reconstruction/phi_phi_plot/dxy/" + topo + "/0.10_cut.root"), "READ");
+		TH2F* phi_phi_h = (TH2F*)file->Get("h");
+		for (TString ax : projection_axis) {
+
+			TCanvas* c = new TCanvas("c", "c", 600, 800);
+			
+			//look for a window only 20 MeV wide	
+			TH1D *h = nullptr;
+			Int_t lower_x_bin = phi_phi_h->GetXaxis()->FindFixBin(lower_bound);
+			Int_t upper_x_bin = phi_phi_h->GetXaxis()->FindFixBin(upper_bound);
+			
+			if (ax == "y"){
+				h = phi_phi_h->ProjectionY("h_proj", lower_x_bin, upper_x_bin);
+			}
+			if (ax == "x") {
+				h = phi_phi_h->ProjectionX("h_pro", lower_y_bin, upper_y_bin);
+			}
+			
+			h->SetTitle(TString::Format(ax + " Projection of Invariant K^{+}K^{-} Mass;M (MeV/c^{2});Events [%.2g MeV/c^{2}]", h->GetBinWidth(1)));
 		
-		SaveCanvas(c1, dat, TString::Format("media/root_files/phi_phi_reconstruction/phi_phi_plot/delta_phi/"+topo+"/mass_cut=%.4gMeV.root", mass_bound*1e3), "UPDATE");
+
+			double x_min = h->GetXaxis()->GetXmin();
+			double x_max = h->GetXaxis()->GetXmax();
+			RooRealVar x("x", "mass", x_min, x_max);
+			Float_t sf = 1e-3;	
+			
+
+			RooDataHist data("data", "Dataset from histogram", RooArgList(x), hist);
+			
+			RooRealVar mean("mean", "mean of gauss", 1019, 1010, 1025 );
+			RooRealVar sigma("sigma", "width of gauss", 20, 15, 30 );
+			RooGaussian gauss("gauss", "signal gaussian", x, mean, sigma);
+			
+			RooRealVar x_0("x_0", "threshold", x_min, x_min*0.5, x_min*1.2);
+			RooRealVar p0("p0", "power", 0.4, 0.2, 2);
+			RooRealVar a0("a0", "a0", 0, -1, 1);
+			RooRealVar b0("b0", "b0", 0, -1, 1);
+			RooRealVar c0("c0", "c0", -10, -10, 1);
+			RooAbsPdf* thresh = ThresholdBackgroundPdf("threshbkg", "threshbkg", x, x_0, p0, a0, b0, c0);
+			
+			RooRealVar nsig("nsig", "signal yield", h->Integral() * 0.5, 0, h->Integral());
+			RooRealVar nbkg("nbkg", "background yield", h->Integral() * 0.5, 0, h->Integral());
+   
+        	model = new RooAddPdf("model", "sig+bg", RooArgList(*Signal, *Background), RooArgList(nsig, nbkg));
+			RooAbsPdf* Signal = &gauss;
+			RooAbsPdf* Background = thresh;
+
+			model->fitTo(data);
+			calc_chi2(x, data, model, cfg.nbins);
+			
+			double binWidth = h->GetXaxis()->GetBinWidth(1);
+			TH1* hModel = model->createHistogram("hModel", x_var, Binning(cfg.nbins));
+			hist->SetMarkerStyle(20);
+
+			TH1* hSignal = Signal->createHistogram("hSignal", x_var, Binning(cfg.nbins));
+			hSignal->SetFillColor(kCyan);
+			hSignal->Scale(nsig.getVal());
+			
+			TH1* hBackground = Background->createHistogram("hBackground", x_var, Binning(cfg.nbins));
+			hBackground->Scale(nbkg.getVal());
+			hBackground->SetFillColor(kRed);
+
+			TLegend* l = new TLegend(0.65, 0.55, 0.90, 0.70); // bottom left, top right
+			// l->SetHeader("Invariant Mass Fits", "C");
+			l->AddEntry(h, "Data", "lep");
+			l->AddEntry(hSignal, "Gaussian Fit", "l");
+			l->AddEntry(hBackground, "Gaussian Fit", "l");
+			l->AddEntry(hModel, "Gaussian Fit", "l");
+			l->SetTextSize(0.035);
+			
+			RVecDraw dat = {{h, "E1P"}, {l, "HIST"}, {hModel, "HIST"}, {hSignal, "HIST"}};
+			SaveCanvas(c, dat, TString::Format("media/root_files/phi_phi_reconstruction/"+ax+"_projection/"+ topo +"/mass_bound=%.4gMeV.root", mass_bound), "RECREATE");
 		
-		delete c1;
-		delete c2;
-		delete c3;
-		delete hist_both;
-		delete hist1;
-		delete hist2;
+			delete c;
+			delete h;
+			delete l;
+			delete thresh;
+			delete Signal; 
+			delete Background; 
+			delete hModel; 
+			delete hSignal; 
+			delete hBackground; 
+		}
+		delete file;
 	}
+
 	return 0;
 }
-
-
-
-

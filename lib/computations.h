@@ -20,10 +20,11 @@ RooGenericPdf* ShiftedArgusPdf(const char* name, const char* title,
     RooRealVar& x_var, RooRealVar& x_var0,
     RooRealVar& c, RooRealVar& p, RooRealVar& shift);
 
-RooAddPdf* BiGaussianPdf(const char* name, const char* title,
+/*
+RooGenericPdf* BiGaussianPdf(const char* name, const char* title,
         RooRealVar& x, RooRealVar& mu1, RooRealVar& sigma1,
         RooRealVar& mu2, RooRealVar& sigma2, RooRealVar& frac);
-
+*/
 RooGenericPdf* ThresholdBackgroundPdf(
     const char* name, const char* title,
     RooRealVar& x_var, RooRealVar& x_var0,
