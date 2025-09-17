@@ -72,7 +72,7 @@ int main() {
 			RooDataHist data("data", "Dataset from histogram", RooArgList(x), h);
 
 			RooRealVar mean1("mean1", "mean of gauss1", 1019.7, 1019, 1021 );
-			RooRealVar sigma1("sigma1", "width of gauss1", 6, 4, 7);
+			RooRealVar sigma1("sigma1", "width of gauss1", 7, 4, 10);
 			RooGaussian* gauss1 = new RooGaussian("gauss1", "gauss1", x, mean1, sigma1);
 
 			RooRealVar mean2("mean2", "mean of gauss2", 1240, 1200, 1300 );
@@ -80,7 +80,7 @@ int main() {
 			RooGaussian* gauss2 = new RooGaussian("gauss2", "gauss2", x, mean2, sigma2);
 			
 			RooRealVar x_0("x_0", "threshold", 988, 980,  995);
-			RooRealVar p0("p0", "power", 0.31, 0.1, 0.5);
+			RooRealVar p0("p0", "power", 0.21, 0.1, 0.5);
 			RooRealVar a0("a0", "a0", 0, -1, 1);
 			RooRealVar b0("b0", "b0", 0, -1e-1, 1e-1);
 			a0.setConstant(true);
@@ -91,7 +91,7 @@ int main() {
 			RooAbsPdf* Background = thresh;
 
 			Float_t h_int = h->Integral();
-			RooRealVar nsig1("nsig1", "yield gauss1", h_int * 0.10, 0.03*h_int, 0.3*h_int);
+			RooRealVar nsig1("nsig1", "yield gauss1", h_int * 0.15, 0.03*h_int, 0.3*h_int);
 			RooRealVar nsig2("nsig2", "yield gauss2", h_int * 0.10, 0, 0.35*h_int);
 			RooRealVar nbkg("nbkg", "background yield", h_int * 0.85, h_int * 0.5, 0.95*h_int);
 
